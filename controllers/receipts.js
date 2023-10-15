@@ -1,4 +1,4 @@
-const Receipt = require("../models/Receipt");
+const Receipt = require("../models/receipt");
 
 const getReceipts = async (req, res) => {
   try {
