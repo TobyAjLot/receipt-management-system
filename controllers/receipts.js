@@ -7,19 +7,23 @@ const getReceipts = async (req, res) => {
     filter.userID = req.user.id;
 
     if (req.query.store) {
-      filter.store = req.query.store;
+      const store = req.query.store;
+      filter.store = new RegExp(store, "i");
     }
 
     if (req.query.product) {
-      filter.product = req.query.product;
+      const product = req.query.product;
+      filter.product = new RegExp(product, "i");
     }
 
     if (req.query.price) {
-      filter.price = req.query.price;
+      const price = req.query.price;
+      filter.price = new RegExp(price, "i");
     }
 
     if (req.query.purchaseDate) {
-      filter.purchaseDate = req.query.purchaseDate;
+      const purchaseDate = req.query.purchaseDate;
+      filter.purchaseDate = new RegExp(purchaseDate, "i");
     }
 
     const receipts = await Receipt.find(filter).exec();

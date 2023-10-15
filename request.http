@@ -44,6 +44,7 @@ Authorization: Bearer <token>
 
 PUT http://localhost:3000/api/users HTTP/1.1
 Content-Type: application/json
+Authorization: Bearer <token>
 
 {
     "firstName": "Jack",
@@ -53,4 +54,4 @@ Content-Type: application/json
 ###
 
 DELETE http://localhost:3000/api/users/receipts/<receiptId> HTTP1.1
-
+Authorization: Bearer <token>
