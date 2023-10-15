@@ -1,9 +1,13 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const multer = require("multer");
-const User = require("./models/user");
-const Receipt = require("./models/receipt");
+const Receipt = require("./models/Receipt");
+const User = require("./models/User");
 const authRoutes = require("./routes/auth");
+const receiptRoutes = require("./routes/receipts");
+const userRoutes = require("./routes/users");
 const verifyToken = require("./middleware/auth");
+const { users, receipts } = require("./data/index");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -13,7 +17,7 @@ app.use(express.json());
 // Set up multer for handling file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Define the folder to store uploaded images
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
@@ -23,6 +27,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.use("/api", authRoutes);
+app.use("/api/users", receiptRoutes);
+app.use("/api/users", userRoutes);
 
 app.post(
   "/api/upload-receipt",
@@ -32,7 +38,14 @@ app.post(
     try {
       const { store, product, price, purchaseDate } = req.body;
       const userID = req.user.id;
-      const imagePath = req.file.path;
+      purchaseDate = new Date(purchaseDate);
+
+      // Check if a file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ error: "No image file uploaded" });
+      }
+
+      const image = req.file.path;
 
       const receipt = new Receipt({
         userID,
@@ -40,46 +53,28 @@ app.post(
         product,
         price,
         purchaseDate,
-        imagePath,
+        imagePath: image,
       });
       await receipt.save();
 
       res.status(201).json(receipt);
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .json({ error: "An error occurred while uploading receipt." });
+      res.status(500).json({ error: error.message });
     }
   }
 );
 
-app.get("/api/receipts", async (req, res) => {
-  try {
-    filter = {};
+mongoose
+  .connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    app.listen(port, () => console.log(`Server is listening on port: ${port}`));
 
-    if (req.query.store) {
-      filter.store = req.query.store;
-    }
-
-    if (req.query.product) {
-      filter.product = req.query.product;
-    }
-
-    if (req.query.purchaseDate) {
-      filter.purchaseDate = req.query.purchaseDate;
-    }
-
-    const receipts = await Receipt.find(filter).exec();
-    res.json(receipts);
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while fetching receipts." });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+    /* ADD DATA ONE TIME */
+    // User.insertMany(users);
+    // Receipt.insertMany(receipts);
+  })
+  .catch((error) => console.log(`${error} did not connect`));
